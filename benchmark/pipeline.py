@@ -11,7 +11,7 @@ from scipy.spatial import cKDTree
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
-sys.path.append(os.path.join(PROJECT_ROOT, 'src', 'core'))
+sys.path.append(os.path.join(PROJECT_ROOT, 'src', 'python'))
 sys.path.append(os.path.join(PROJECT_ROOT, 'src', 'utils'))
 sys.path.append(os.path.join(SCRIPT_DIR, 'utils'))
 
@@ -210,7 +210,7 @@ def plot_pipeline_results(enc_results, dec_results, errors, sizes, dataset_name=
 
 
 def main():
-    print("=== LiZIP Production Pipeline Benchmark (C++ Focused) ===")
+    print("=== LiZIP Production Pipeline Benchmark ===")
     global TOTAL_FRAMES
     
     parser = argparse.ArgumentParser(description="Run Full Pipeline Benchmark")
