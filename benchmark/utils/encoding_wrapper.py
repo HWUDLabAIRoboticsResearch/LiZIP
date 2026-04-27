@@ -43,16 +43,20 @@ def encode_laszip(input_path, output_path, scales=[1e-5, 1e-5, 1e-5]):
     if laspy is None: 
         return 0
         
-    points = load_point_cloud(input_path)
-    
-    start_t = time.time()
-    header = laspy.LasHeader(point_format=3, version="1.2")
-    header.scales = scales
-    header.offsets = [0, 0, 0]
-    las = laspy.LasData(header)
-    las.x, las.y, las.z = points[:,0], points[:,1], points[:,2]
-    las.write(output_path)
-    return time.time() - start_t
+    try:
+        points = load_point_cloud(input_path)
+        
+        start_t = time.time()
+        header = laspy.LasHeader(point_format=3, version="1.2")
+        header.scales = scales
+        header.offsets = [0, 0, 0]
+        las = laspy.LasData(header)
+        las.x, las.y, las.z = points[:,0], points[:,1], points[:,2]
+        las.write(output_path)
+        return time.time() - start_t
+    except Exception as e:
+        print(f"Laszip Encode Error: {e}")
+        return 0
 
 def encode_gzip(input_path, output_path):
     """Standard GZip baseline (raw bytes)."""

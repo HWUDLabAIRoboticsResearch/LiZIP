@@ -7,7 +7,7 @@ import zlib
 import lzma
 
 from model import PointPredictorMLP
-from src.utils.data_loader import load_point_cloud
+from data_loader import load_point_cloud
 from voxel_sort import voxel_quantize_and_sort
 
 MODEL_PATH = "models/mlp_v1.pth"

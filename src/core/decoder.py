@@ -7,7 +7,7 @@ import zlib
 import lzma
 
 from model import PointPredictorMLP
-from src.utils.data_loader import save_kitti_data
+from data_loader import save_kitti_data
 
 MODEL_PATH = "models/mlp_v1.pth" 
 COMPRESSED_FILE = "data/compressed.lizip"

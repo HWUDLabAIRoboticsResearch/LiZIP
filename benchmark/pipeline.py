@@ -10,10 +10,13 @@ from scipy.spatial import cKDTree
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
-sys.path.append(os.path.join(PROJECT_ROOT, 'src'))
 
-import encoding
-import decoding
+sys.path.append(os.path.join(PROJECT_ROOT, 'src', 'core'))
+sys.path.append(os.path.join(PROJECT_ROOT, 'src', 'utils'))
+sys.path.append(os.path.join(SCRIPT_DIR, 'utils'))
+
+import encoding_wrapper as encoding
+import decoding_wrapper as decoding
 from model import PointPredictorMLP
 from data_loader import load_point_cloud
 import encoder 
@@ -22,7 +25,7 @@ import argparse
 
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "data", "benchmark_out")
 MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "grid_search", "mlp_c3_h256.pth")
-CPP_EXE = os.path.join(PROJECT_ROOT, "lizip.exe")
+CPP_EXE = os.path.join(PROJECT_ROOT, "src", "cpp", "lizip.exe")
 MODEL_BIN = os.path.join(PROJECT_ROOT, "models", "grid_search", "mlp_c3_h256.bin")
 CONTEXT_SIZE = 3
 HIDDEN_DIM = 256
@@ -144,6 +147,7 @@ def plot_pipeline_results(enc_results, dec_results, errors, sizes, dataset_name=
     plt.ylabel("Time (s)")
     plt.grid(True, alpha=0.3)
     plt.legend()
+    ensure_dir(os.path.join(SCRIPT_DIR, "graphs"))
     plt.savefig(os.path.join(SCRIPT_DIR, "graphs", "pipeline_total_time.png"))
 
     plt.figure(figsize=(12, 6))

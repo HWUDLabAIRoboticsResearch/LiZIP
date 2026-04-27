@@ -11,3 +11,4 @@ open3d
 nuscenes-devkit
 DracoPy
 laspy
+lazrs
