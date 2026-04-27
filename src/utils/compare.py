@@ -2,7 +2,7 @@
 compare.py - Compare original vs LiZIP-reconstructed point cloud.
 
 Usage:
-    python compare.py <original> <reconstructed>
+    python src/utils/compare.py <original> <reconstructed>
 
 The reconstructed file is produced by running:
     python main.py encode <original> out.lizip --mode cpp
@@ -19,7 +19,7 @@ from scipy.spatial import cKDTree
 
 init()
 
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, PROJECT_ROOT)
 
 
