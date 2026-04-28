@@ -403,7 +403,7 @@
 
         <!-- Table II: NuScenes -->
         <h3 class="title is-5" style="margin-top: 1em; margin-bottom: 0.4em;">
-          Table II &mdash; NuScenes (100 frames)
+          Table II &mdash; NuScenes (100 frames), Training Dataset
         </h3>
         <div class="table-container">
           <table class="custom-table">
@@ -543,9 +543,31 @@
             </tbody>
           </table>
         </div>
+
+        <div style="display:flex; gap:1.5%; margin-top:1.2em;">
+          <figure style="flex:1; margin:0; text-align:center;">
+            <img src="benchmark/graphs/argoverse/pipeline_total_time_arg.png"
+                 alt="Total pipeline time per frame — NuScenes"
+                 style="width:100%; height:auto; border-radius:6px;">
+            <figcaption style="font-size:12px; color:#555; margin-top:4px;">Pipeline Time per Frame</figcaption>
+          </figure>
+          <figure style="flex:1; margin:0; text-align:center;">
+            <img src="benchmark/graphs/argoverse/pipeline_file_size_arg.png"
+                 alt="Compressed file size per frame — NuScenes"
+                 style="width:100%; height:auto; border-radius:6px;">
+            <figcaption style="font-size:12px; color:#555; margin-top:4px;">File Size per Frame</figcaption>
+          </figure>
+          <figure style="flex:1; margin:0; text-align:center;">
+            <img src="benchmark/graphs/argoverse/pipeline_error_arg.png"
+                 alt="Reconstruction error per frame — NuScenes"
+                 style="width:100%; height:auto; border-radius:6px;">
+            <figcaption style="font-size:12px; color:#555; margin-top:4px;">Reconstruction Error per Frame</figcaption>
+          </figure>
+        </div>
+
         <p style="font-size: 11px; font-style: italic; margin-top: 0.4em;">
           LiZIP is trained on NuScenes only; Argoverse results demonstrate zero-shot generalisation
-          without retraining. &mdash; indicates timing not directly measured for baseline methods.
+          without retraining.
         </p>
 
         <!-- Table IV: SOTA -->
