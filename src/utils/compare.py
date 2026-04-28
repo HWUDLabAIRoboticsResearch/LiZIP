@@ -96,6 +96,7 @@ def compare(original_path, reconstructed_path):
     print(f"  {Fore.CYAN}{'Chamfer distance':<20}{Style.RESET_ALL}  {Fore.YELLOW}{chamfer:.4f}{Style.RESET_ALL} mm")
     print(f"  {Fore.CYAN}{'Hausdorff distance':<20}{Style.RESET_ALL}  {Fore.RED}{hausdorff:.4f}{Style.RESET_ALL} mm")
     print()
+    return orig, rec
 
 
 def main():
@@ -105,6 +106,10 @@ def main():
     )
     parser.add_argument("original", help="Original point cloud (.bin, .txt, .ply)")
     parser.add_argument("reconstructed", help="Reconstructed point cloud (.bin, .txt, .ply)")
+    parser.add_argument("--max-mean-mm", type=float, default=None,
+                        help="Fail (exit 1) if mean NN error exceeds this threshold in mm")
+    parser.add_argument("--max-p99-mm", type=float, default=None,
+                        help="Fail (exit 1) if p99 NN error exceeds this threshold in mm")
     args = parser.parse_args()
 
     for p in (args.original, args.reconstructed):
@@ -112,7 +117,24 @@ def main():
             print(f"{Fore.RED}[error]{Style.RESET_ALL} File not found: {p}")
             sys.exit(1)
 
-    compare(args.original, args.reconstructed)
+    orig, rec = compare(args.original, args.reconstructed)
+
+    if args.max_mean_mm is not None or args.max_p99_mm is not None:
+        tree = cKDTree(rec[:, :3])
+        dists, _ = tree.query(orig[:, :3], k=1)
+        dists_mm = dists * 1000.0
+        mean_mm = dists_mm.mean()
+        p99_mm  = np.percentile(dists_mm, 99)
+        failed = False
+        if args.max_mean_mm is not None and mean_mm > args.max_mean_mm:
+            print(f"{Fore.RED}[FAIL]{Style.RESET_ALL} mean error {mean_mm:.4f} mm > threshold {args.max_mean_mm} mm")
+            failed = True
+        if args.max_p99_mm is not None and p99_mm > args.max_p99_mm:
+            print(f"{Fore.RED}[FAIL]{Style.RESET_ALL} p99 error {p99_mm:.4f} mm > threshold {args.max_p99_mm} mm")
+            failed = True
+        if not failed:
+            print(f"{Fore.GREEN}[PASS]{Style.RESET_ALL} Reconstruction error within bounds.")
+        sys.exit(1 if failed else 0)
 
 
 if __name__ == "__main__":

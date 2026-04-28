@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── C++ backend ────────────────────────────────────────────────────────────
+  cpp-backend:
+    name: "C++ | ${{ matrix.fixture }}"
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture:
+          # NuScenes (10 frames)
+          - sample_nuscenes.bin
+          - sample_nuscenes2.bin
+          - sample_nuscenes_3.bin
+          - sample_nuscenes_4.bin
+          - sample_nuscenes_5.bin
+          - sample_nuscenes_6.bin
+          - sample_nuscenes_7.bin
+          - sample_nuscenes_8.bin
+          - sample_nuscenes_9.bin
+          - sample_nuscenes_10.bin
+          # Argoverse (10 frames, converted to 5-float .bin)
+          - sample_argo_315978406019574000.bin
+          - sample_argo_315978407719832000.bin
+          - sample_argo_315978409419858000.bin
+          - sample_argo_315978411120548000.bin
+          - sample_argo_315978412819906000.bin
+          - sample_argo_315978414620565000.bin
+          - sample_argo_315978416320154000.bin
+          - sample_argo_315978418019960000.bin
+          - sample_argo_315978419719539000.bin
+          - sample_argo_315978421520424000.bin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y g++ libomp-dev zlib1g-dev liblzma-dev
+
+      - name: Compile C++ engine
+        run: |
+          g++ -O2 -fopenmp -mavx2 \
+            -o src/cpp/lizip.exe src/cpp/lizip.cpp \
+            -lz -llzma
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install numpy scipy colorama
+
+      - name: Encode + decode
+        run: |
+          python main.py encode tests/fixtures/${{ matrix.fixture }} /tmp/out.lizip --mode cpp
+          python main.py decode /tmp/out.lizip /tmp/rec.bin --mode cpp
+
+      - name: Assert reconstruction error
+        run: |
+          python src/utils/compare.py \
+            tests/fixtures/${{ matrix.fixture }} /tmp/rec.bin \
+            --max-mean-mm 0.02 --max-p99-mm 0.05
+
+  # ── Python backend ─────────────────────────────────────────────────────────
+  python-backend:
+    name: "Python | ${{ matrix.fixture }}"
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture:
+          # NuScenes (10 frames)
+          - sample_nuscenes.bin
+          - sample_nuscenes2.bin
+          - sample_nuscenes_3.bin
+          - sample_nuscenes_4.bin
+          - sample_nuscenes_5.bin
+          - sample_nuscenes_6.bin
+          - sample_nuscenes_7.bin
+          - sample_nuscenes_8.bin
+          - sample_nuscenes_9.bin
+          - sample_nuscenes_10.bin
+          # Argoverse (10 frames, converted to 5-float .bin)
+          - sample_argo_315978406019574000.bin
+          - sample_argo_315978407719832000.bin
+          - sample_argo_315978409419858000.bin
+          - sample_argo_315978411120548000.bin
+          - sample_argo_315978412819906000.bin
+          - sample_argo_315978414620565000.bin
+          - sample_argo_315978416320154000.bin
+          - sample_argo_315978418019960000.bin
+          - sample_argo_315978419719539000.bin
+          - sample_argo_315978421520424000.bin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          pip install numpy scipy colorama
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Encode + decode
+        run: |
+          python main.py encode tests/fixtures/${{ matrix.fixture }} /tmp/out.lizip
+          python main.py decode /tmp/out.lizip /tmp/rec.bin
+
+      - name: Assert reconstruction error
+        run: |
+          python src/utils/compare.py \
+            tests/fixtures/${{ matrix.fixture }} /tmp/rec.bin \
+            --max-mean-mm 0.02 --max-p99-mm 0.05
