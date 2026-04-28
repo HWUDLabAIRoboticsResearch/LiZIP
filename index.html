@@ -19,6 +19,22 @@
 </head>
 
 <body>
+  <button id="dark-mode-toggle" title="Toggle dark mode" onclick="toggleDark()">
+    <i id="dark-mode-icon" class="fas fa-moon"></i>
+  </button>
+  <script>
+    (function() {
+      if (localStorage.getItem('lizip-dark') === '1') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('dark-mode-icon').className = 'fas fa-sun';
+      }
+    })();
+    function toggleDark() {
+      var on = document.body.classList.toggle('dark-mode');
+      document.getElementById('dark-mode-icon').className = on ? 'fas fa-sun' : 'fas fa-moon';
+      localStorage.setItem('lizip-dark', on ? '1' : '0');
+    }
+  </script>
 
   <!-- ─── HERO ─────────────────────────────────────────────────────────── -->
   <section class="hero" id="main-section">
@@ -384,7 +400,7 @@
           </table>
         </div>
         <p style="font-size: 11px; font-style: italic;">
-          k = context window size; H = hidden dimension. &mdash; indicates values not reported
+          k = context window size; H = hidden dimension.
           in the paper for those configurations.
         </p>
       </div>

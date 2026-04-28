@@ -695,3 +695,75 @@ video {
     height: 400px !important;
   }
 }
+
+/* ── Dark mode overrides ──────────────────────────────────────────────────── */
+body.dark-mode {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+body.dark-mode .hero { background-color: #1a1a1a; }
+body.dark-mode .section { background-color: #1a1a1a; }
+body.dark-mode .title { color: #f0f0f0; }
+body.dark-mode .publication-authors a { color: #7ab4f5; }
+body.dark-mode .publication-authors a:hover { color: #add0ff; }
+body.dark-mode .publication-unis { color: #aaa; }
+body.dark-mode .publication-unis a { color: #aaa; }
+body.dark-mode p, body.dark-mode li { color: #d0d0d0; }
+body.dark-mode strong { color: #f0f0f0; }
+body.dark-mode .card {
+  border-color: #0083b0;
+  background-color: #222;
+}
+body.dark-mode .card-header { background-color: #0083b0; }
+body.dark-mode .card-body {
+  background-color: #1a2a2e;
+  color: #7ecfea;
+}
+body.dark-mode pre {
+  background-color: #111;
+  color: #d0d0d0;
+}
+body.dark-mode code { color: #d0d0d0; background-color: #2a2a2a; }
+body.dark-mode table.custom-table {
+  border-top-color: #555;
+  border-bottom-color: #555;
+  color: #d0d0d0;
+}
+body.dark-mode table.custom-table th { border-bottom-color: #555; color: #f0f0f0; }
+body.dark-mode table.custom-table td.highlight { background-color: #0d3a47; }
+body.dark-mode .pipeline-box { border-color: #0083b0; }
+body.dark-mode .pipeline-box-title { background-color: #0083b0; }
+body.dark-mode .pipeline-box-body { background-color: #1a2a2e; color: #7ecfea; }
+body.dark-mode .pipeline-arrow-sym { color: #0083b0; }
+body.dark-mode footer.footer { background-color: #111; color: #aaa; }
+body.dark-mode footer.footer a { color: #7ab4f5; }
+body.dark-mode h3.title { color: #f0f0f0; }
+body.dark-mode figcaption { color: #d0d0d0 !important; }
+body.dark-mode p[style*="font-size: 11px"] { color: #d0d0d0; }
+body.dark-mode p[style*="font-size:11px"] { color: #d0d0d0; }
+body.dark-mode p[style*="font-size: 12px"] { color: #d0d0d0; }
+body.dark-mode p[style*="font-size:12px"] { color: #d0d0d0; }
+
+/* ── Dark mode toggle button ─────────────────────────────────────────────── */
+#dark-mode-toggle {
+  position: fixed;
+  top: 14px;
+  right: 18px;
+  z-index: 9999;
+  background: rgba(180,180,180,0.2);
+  border: 1px solid rgba(150,150,150,0.3);
+  border-radius: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  transition: background 0.2s;
+  backdrop-filter: blur(4px);
+}
+#dark-mode-toggle:hover { background: rgba(150,150,150,0.35); }
+body.dark-mode #dark-mode-toggle {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.15);
+}
+body.dark-mode #dark-mode-toggle:hover { background: rgba(255,255,255,0.15); }
+body.dark-mode #dark-mode-toggle i { color: #f0f0f0; }
