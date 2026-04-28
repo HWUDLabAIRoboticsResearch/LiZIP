@@ -711,28 +711,53 @@ python main.py encode input.bin output.lizip --model models/grid_search/mlp_c8_h
       <div class="columns is-centered" style="margin-top: 2em;">
         <div class="column is-full-width">
           <h2 class="title is-3">BibTeX</h2>
-          <pre><code>@misc{shibu2026lizipautoregressivecompressionframework,
-      title={LiZIP: An Auto-Regressive Compression Framework for LiDAR Point Clouds}, 
+          <div style="position:relative;" id="bibtex-container">
+            <pre id="bibtex-block"><code>@misc{LiZIP,
+      title={LiZIP: An Auto-Regressive Compression Framework for LiDAR Point Clouds},
       author={Aditya Shibu and Kayvan Karim and Claudio Zito},
       year={2026},
       eprint={2603.23162},
       archivePrefix={arXiv},
       primaryClass={cs.RO},
-      url={https://arxiv.org/abs/2603.23162}, 
+      url={https://arxiv.org/abs/2603.23162},
 }</code></pre>
+            <button id="bibtex-copy-btn" onclick="copyBibtex()" title="Copy BibTeX"
+              style="position:absolute;top:10px;right:10px;background:rgba(180,180,180,0.3);
+                     border:none;border-radius:6px;padding:9px 11px;cursor:pointer;
+                     color:rgba(0,0,0,0.6);opacity:0;transition:opacity 0.2s;
+                     display:flex;align-items:center;font-size:17px;">
+              <i class="fas fa-clipboard"></i>
+            </button>
+          </div>
+          <script>
+            (function() {
+              var c = document.getElementById('bibtex-container');
+              var b = document.getElementById('bibtex-copy-btn');
+              c.addEventListener('mouseenter', function() { b.style.opacity = '1'; });
+              c.addEventListener('mouseleave', function() { b.style.opacity = '0'; });
+            })();
+            function copyBibtex() {
+              var text = document.getElementById('bibtex-block').innerText;
+              var btn  = document.getElementById('bibtex-copy-btn');
+              navigator.clipboard.writeText(text).then(function() {
+                btn.style.color = 'rgba(0,0,0,0.9)';
+                setTimeout(function() {
+                  btn.style.color = 'rgba(0,0,0,0.6)';
+                }, 2000);
+              });
+            }
+          </script>
         </div>
       </div>
 
     </div>
   </section>
 
-  <!-- ─── FOOTER ───────────────────────────────────────────────────────── -->
   <footer class="footer">
     <div class="container">
       <div class="content has-text-centered" style="font-size: 0.9em; color: #555;">
         <p>
-          This work was supported by the Dubai Research, Development and Innovation (RDI) Office
-          under Grant <strong>CogWaters 2025/DRDI0163</strong>.
+          This work was supported by the Lab for AI and Robotics Research (LAIRR) at Heriot Watt University, Dubai</strong>.
         </p>
         <p>
           Website template adapted from
