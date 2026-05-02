@@ -1,9 +1,33 @@
 import argparse
 import os
+import platform
 import subprocess
 import sys
 
 from colorama import Fore, Back, Style, init
+
+
+def is_jetson():
+    try:
+        with open('/proc/device-tree/model', 'r') as f:
+            return 'jetson' in f.read().lower()
+    except OSError:
+        return False
+
+
+def get_version_line():
+    if is_jetson():
+        try:
+            with open('/proc/device-tree/model', 'r') as f:
+                device = f.read().strip().rstrip('\x00')
+        except OSError:
+            device = "NVIDIA Jetson"
+        model = os.path.relpath(DEFAULT_MODEL_ENGINE, PROJECT_ROOT)
+        return Fore.GREEN + Style.BRIGHT + f"Version: {device} (ARM64, CUDA + TensorRT)\nModel:   {model}" + Style.RESET_ALL
+    sys_name = platform.system()
+    arch = platform.machine()
+    model = os.path.relpath(DEFAULT_MODEL_PTH, PROJECT_ROOT)
+    return Fore.GREEN + Style.BRIGHT + f"Version: {sys_name} ({arch}, CPU)\nModel:   {model}" + Style.RESET_ALL
 
 init()
 
@@ -38,14 +62,23 @@ LiZIP - Neural LiDAR Point Cloud Compression
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_MODEL_PTH = os.path.join(PROJECT_ROOT, "models", "grid_search", "mlp_c3_h256.pth")
 DEFAULT_MODEL_BIN = os.path.join(PROJECT_ROOT, "models", "grid_search", "mlp_c3_h256.bin")
-CPP_EXE = os.path.join(PROJECT_ROOT, "src", "cpp", "lizip.exe")
+DEFAULT_MODEL_ENGINE = os.path.join(PROJECT_ROOT, "models", "jetson", "mlp_c3_h256.engine")
+
+if is_jetson():
+    CPP_EXE = os.path.join(PROJECT_ROOT, "src", "cpp", "jetson", "lizip")
+else:
+    CPP_EXE = os.path.join(PROJECT_ROOT, "src", "cpp", "lizip.exe")
 
 
-def load_python_model(pth_path):
+def load_python_model(model_path):
+    if model_path.endswith('.engine'):
+        from src.python.trt_model import TRTPointPredictor
+        return TRTPointPredictor(model_path)
+
     import torch
     from src import PointPredictorMLP
 
-    checkpoint = torch.load(pth_path, map_location="cpu", weights_only=False)
+    checkpoint = torch.load(model_path, map_location="cpu", weights_only=False)
     if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
         state_dict   = checkpoint["model_state_dict"]
         context_size = checkpoint.get("context_size", 3)
@@ -60,19 +93,25 @@ def load_python_model(pth_path):
     return model
 
 
+def _default_bin():
+    return DEFAULT_MODEL_ENGINE if is_jetson() else DEFAULT_MODEL_BIN
+
+def _default_pth():
+    return DEFAULT_MODEL_ENGINE if is_jetson() else DEFAULT_MODEL_PTH
+
+
 def cmd_encode(args):
     if args.mode == "cpp":
         if not os.path.isfile(CPP_EXE):
             print(f"[error] C++ executable not found: {CPP_EXE}")
             sys.exit(1)
-        bin_path = args.model or DEFAULT_MODEL_BIN
+        bin_path = args.model or _default_bin()
         cmd = [CPP_EXE, "e", args.input, args.output, bin_path, args.compression]
         result = subprocess.run(cmd, text=True)
         sys.exit(result.returncode)
     else:
         from src import encode_file_closed_loop
-        pth_path = args.model or DEFAULT_MODEL_PTH
-        model = load_python_model(pth_path)
+        model = load_python_model(args.model or _default_pth())
         encode_file_closed_loop(args.input, args.output, model, compression=args.compression)
         size = os.path.getsize(args.output)
         print(f"Encoded -> {args.output} ({size:,} bytes)")
@@ -83,14 +122,13 @@ def cmd_decode(args):
         if not os.path.isfile(CPP_EXE):
             print(f"[error] C++ executable not found: {CPP_EXE}")
             sys.exit(1)
-        bin_path = args.model or DEFAULT_MODEL_BIN
+        bin_path = args.model or _default_bin()
         cmd = [CPP_EXE, "d", args.input, args.output, bin_path]
         result = subprocess.run(cmd, text=True)
         sys.exit(result.returncode)
     else:
         from src import decode_file
-        pth_path = args.model or DEFAULT_MODEL_PTH
-        model = load_python_model(pth_path)
+        model = load_python_model(args.model or _default_pth())
         decode_file(args.input, args.output, model)
         print(f"Decoded -> {args.output}")
 
@@ -140,6 +178,8 @@ def build_parser():
 
 def main():
     print(BANNER)
+    print(get_version_line())
+    print()
     parser = build_parser()
     args = parser.parse_args()
 

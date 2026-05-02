@@ -37,9 +37,11 @@ def shuffle_bytes(arr):
 def encode_file_closed_loop(input_path, output_path, model, debug_gt_path=None, compression='zlib', input_format='auto'):
     print(f"Encoding (Zero-Drift Quantized, {compression}): {input_path}")
     
-    # Dynamically detect context size from model
-    first_layer = [m for m in model.modules() if isinstance(m, torch.nn.Linear)][0]
-    context_size = first_layer.in_features // 3
+    if hasattr(model, 'context_size'):
+        context_size = model.context_size
+    else:
+        first_layer = [m for m in model.modules() if isinstance(m, torch.nn.Linear)][0]
+        context_size = first_layer.in_features // 3
     print(f"Detected Model Context Size: {context_size}")
 
     if debug_gt_path is None:

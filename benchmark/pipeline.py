@@ -11,22 +11,28 @@ from scipy.spatial import cKDTree
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
-sys.path.append(os.path.join(PROJECT_ROOT, 'src', 'python'))
-sys.path.append(os.path.join(PROJECT_ROOT, 'src', 'utils'))
+sys.path.append(PROJECT_ROOT)
 sys.path.append(os.path.join(SCRIPT_DIR, 'utils'))
 
 import encoding_wrapper as encoding
 import decoding_wrapper as decoding
-from model import PointPredictorMLP
-from data_loader import load_point_cloud
-import encoder 
-import decoder
+from src.python.model import PointPredictorMLP
+from src.utils.data_loader import load_point_cloud
+from src.python import encoder
+from src.python import decoder
 import argparse
 
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "data", "benchmark_out")
 MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "grid_search", "mlp_c3_h256.pth")
-CPP_EXE = os.path.join(PROJECT_ROOT, "src", "cpp", "lizip.exe")
-MODEL_BIN = os.path.join(PROJECT_ROOT, "models", "grid_search", "mlp_c3_h256.bin")
+def _is_jetson():
+    try:
+        with open('/proc/device-tree/model', 'r') as f:
+            return 'jetson' in f.read().lower()
+    except OSError:
+        return False
+
+CPP_EXE = os.path.join(PROJECT_ROOT, "src", "cpp", "jetson", "lizip") if _is_jetson() else os.path.join(PROJECT_ROOT, "src", "cpp", "lizip.exe")
+MODEL_BIN = os.path.join(PROJECT_ROOT, "models", "jetson", "mlp_c3_h256.engine") if _is_jetson() else os.path.join(PROJECT_ROOT, "models", "grid_search", "mlp_c3_h256.bin")
 CONTEXT_SIZE = 3
 HIDDEN_DIM = 256
 TOTAL_FRAMES = 100
@@ -56,7 +62,8 @@ def run_cpp_lizip(mode, input_path, output_path, model_bin, compression=None):
                 padded[:, :4] = points[:, :4]
             else:
                 padded[:, :3] = points[:, :3]
-            temp_bin = input_path + ".temp.bin"
+            ensure_dir(OUTPUT_DIR)
+            temp_bin = os.path.join(OUTPUT_DIR, os.path.basename(input_path) + ".temp.bin")
             padded.tofile(temp_bin)
             input_arg = temp_bin
         else:
@@ -65,31 +72,26 @@ def run_cpp_lizip(mode, input_path, output_path, model_bin, compression=None):
         args = [CPP_EXE, mode, input_arg, output_path, model_bin]
         if compression:
             args.append(compression)
-            
-        result = subprocess.run(
-            args,
-            capture_output=True, text=True
-        )
+
+        result = subprocess.run(args, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"C++ Error: {result.stderr}")
             return 0.0, {}
-            
+
         match = re.search(r"in ([\d\.]+)s", result.stdout)
-        
+
         breakdown = {}
         for key in ["Raw_Float_Size", "Quantized_Int_Size", "Stage1_Entropy_Only", "Stage2_MLP_Residuals", "Stage3_Final_Shuffled"]:
             b_match = re.search(fr"{key}: (\d+)", result.stdout)
             if b_match:
                 breakdown[key] = int(b_match.group(1))
 
-        if temp_bin and os.path.exists(temp_bin):
-            os.remove(temp_bin)
-            
         return (float(match.group(1)) if match else 0.0), breakdown
-    except Exception as e:
+    except Exception:
+        return 0.0, {}
+    finally:
         if temp_bin and os.path.exists(temp_bin):
             os.remove(temp_bin)
-        return 0.0, {}
 
 def calculate_max_error(gt_points, rec_points):
     if rec_points is None: return 99999.0
@@ -231,18 +233,24 @@ def main():
     
     model = None
     if args.mode in ['python', 'dual']:
-        print(f"Loading Python Model for comparison: {MODEL_PATH}")
-        parts = os.path.basename(args.bin).split('_')
-        k_val = int(parts[1][1:]) if len(parts) > 1 else CONTEXT_SIZE
-        h_val = int(parts[2][1:].split('.')[0]) if len(parts) > 2 else HIDDEN_DIM
+        engine_path = os.path.join(PROJECT_ROOT, "models", "jetson", "mlp_c3_h256.engine")
+        if _is_jetson() and os.path.exists(engine_path):
+            print(f"Loading TensorRT Engine: {engine_path}")
+            from src.python.trt_model import TRTPointPredictor
+            model = TRTPointPredictor(engine_path)
+        else:
+            print(f"Loading Python Model: {MODEL_PATH}")
+            parts = os.path.basename(args.bin).split('_')
+            k_val = int(parts[1][1:]) if len(parts) > 1 else CONTEXT_SIZE
+            h_val = int(parts[2][1:].split('.')[0]) if len(parts) > 2 else HIDDEN_DIM
 
-        pth_path = args.bin.replace('.bin', '.pth')
-        if not os.path.exists(pth_path):
-            pth_path = MODEL_PATH
-            
-        model = PointPredictorMLP(context_size=k_val, hidden_dim=h_val)
-        model.load_state_dict(torch.load(pth_path, map_location=device))
-        model.to(device); model.eval()
+            pth_path = args.bin.replace('.bin', '.pth')
+            if not os.path.exists(pth_path):
+                pth_path = MODEL_PATH
+
+            model = PointPredictorMLP(context_size=k_val, hidden_dim=h_val)
+            model.load_state_dict(torch.load(pth_path, map_location=device))
+            model.to(device); model.eval()
 
     files = encoding.get_files(lidar_dir, TOTAL_FRAMES, randomize=args.random)
     

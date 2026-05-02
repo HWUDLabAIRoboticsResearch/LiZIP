@@ -3,8 +3,10 @@ import time
 import gzip
 import torch
 from suppress import suppress_stdout
-from data_loader import load_point_cloud
-import encoder
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from src.utils.data_loader import load_point_cloud
+from src.python import encoder
 
 try:
     import DracoPy

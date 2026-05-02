@@ -3,7 +3,9 @@ import time
 import gzip
 import numpy as np
 from suppress import suppress_stdout
-import decoder
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from src.python import decoder
 
 try:
     import DracoPy
