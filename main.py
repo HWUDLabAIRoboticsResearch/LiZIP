@@ -16,17 +16,32 @@ def is_jetson():
 
 
 def get_version_line():
+    argv = sys.argv[1:]
+    mode = 'python'
+    model_override = None
+    for i, arg in enumerate(argv):
+        if arg == '--mode' and i + 1 < len(argv):
+            mode = argv[i + 1]
+        if arg == '--model' and i + 1 < len(argv):
+            model_override = argv[i + 1]
+
     if is_jetson():
         try:
             with open('/proc/device-tree/model', 'r') as f:
                 device = f.read().strip().rstrip('\x00')
         except OSError:
             device = "NVIDIA Jetson"
-        model = os.path.relpath(DEFAULT_MODEL_ENGINE, PROJECT_ROOT)
+        model = os.path.relpath(model_override or DEFAULT_MODEL_ENGINE, PROJECT_ROOT)
         return Fore.GREEN + Style.BRIGHT + f"Version: {device} (ARM64, CUDA + TensorRT)\nModel:   {model}" + Style.RESET_ALL
+
     sys_name = platform.system()
     arch = platform.machine()
-    model = os.path.relpath(DEFAULT_MODEL_PTH, PROJECT_ROOT)
+    if model_override:
+        model = model_override
+    elif mode == 'cpp':
+        model = os.path.relpath(DEFAULT_MODEL_BIN, PROJECT_ROOT)
+    else:
+        model = os.path.relpath(DEFAULT_MODEL_PTH, PROJECT_ROOT)
     return Fore.GREEN + Style.BRIGHT + f"Version: {sys_name} ({arch}, CPU)\nModel:   {model}" + Style.RESET_ALL
 
 init()
