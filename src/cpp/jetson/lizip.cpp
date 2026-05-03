@@ -365,7 +365,7 @@ int main(int argc, char** argv) {
     std::string comp_method = (argc > 5) ? argv[5] : "lzma";
     PointPredictor model;
     if (!model.load(model_path)) { std::cerr << "Error: Could not load model " << model_path << "\n"; return 1; }
-    const float SCALE = 100000.0f; const int BLOCK = 128;
+    const float SCALE = 100000.0f; const int BLOCK = 32;
     if (mode == "e") {
         FrameData frame; frame.in_path = in_path; frame.out_path = out_path;
         encode_frame_pipelined(frame, model, SCALE, BLOCK, model.context_size, comp_method);

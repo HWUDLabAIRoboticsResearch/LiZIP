@@ -34,14 +34,15 @@ def _load_point_cloud(path):
     return mod.load_point_cloud(path)
 
 
-def load(path):
+def load(path, stride=None):
     ext = os.path.splitext(path)[1].lower()
     if ext == ".bin":
         raw = np.fromfile(path, dtype=np.float32)
-        # Try strides in order: 5 (NuScenes), 3 (LiZIP reconstructed), 4 (KITTI)
-        for stride in (5, 3, 4):
-            if raw.size % stride == 0:
-                return raw.reshape(-1, stride)[:, :3]
+        if stride is not None:
+            return raw.reshape(-1, stride)[:, :3]
+        for s in (5, 4, 3):
+            if raw.size % s == 0:
+                return raw.reshape(-1, s)[:, :3]
         raise ValueError(f"Cannot infer point stride for {path} (float count={raw.size})")
     return _load_point_cloud(path)[:, :3]
 
@@ -60,7 +61,7 @@ def compare(original_path, reconstructed_path):
     print(f"  Reconstructed : {reconstructed_path}\n")
 
     orig = load(original_path)
-    rec  = load(reconstructed_path)
+    rec  = load(reconstructed_path, stride=3)
 
     print(f"  {Fore.CYAN}Original points   :{Style.RESET_ALL} {len(orig):,}")
     print(f"  {Fore.CYAN}Reconstructed pts :{Style.RESET_ALL} {len(rec):,}")
